@@ -40,9 +40,26 @@ variableGroups:
       - operator_image_id
       - operator_user
       - control_plane_allowed_cidrs
+      - control_plane_is_public
       - create_cluster
       - operator_allowed_cidrs
       - state_id
+      - cidr_vcn
+      - cidr_bastion_subnet
+      - cidr_operator_subnet
+      - cidr_cp_subnet
+      - cidr_int_lb_subnet
+      - cidr_pub_lb_subnet
+      - cidr_workers_subnet
+      - cidr_pods_subnet
+      - cni_type
+      - simple_np_size
+      - create_bastion
+      - create_vcn
+      - create_operator
+      - gpu_np_shape
+      - gpu_np_size
+      - simple_np_flex_shape
 
   - title: "General configuration"
     visible: true
@@ -75,21 +92,21 @@ variableGroups:
 #    - cidr_workers_subnet
 #    - cidr_pods_subnet
 
-  - title: "Advanced Cluster configuration"
-    visible: true
-    variables:
-      - cni_type
-      - simple_np_size
-      #- simple_np_flex_shape
-      #- gpu_np_size
-      #- gpu_np_shape
+  #- title: "Advanced Cluster configuration"
+  #  visible: true
+  #  variables:
+  #    #- cni_type
+  #    #- simple_np_size
+  #    #- simple_np_flex_shape
+  #    #- gpu_np_size
+  #    #- gpu_np_shape
 
   - title: "Access to the Kubernetes cluster"
     visible: true
     variables:
-      - control_plane_is_public
-      - create_bastion
-      - create_operator
+      #- control_plane_is_public
+      #- create_bastion
+      #- create_operator
       - ssh_public_key
 
 variables:
@@ -245,7 +262,7 @@ variables:
     title: Create public OKE API?
     description: Associate a public IP address with the OKE control plane endpoint?
     type: boolean
-    default: true
+    default: false
 
   ssh_public_key:
     title: SSH public key
@@ -254,12 +271,12 @@ variables:
     type: oci:core:ssh:publickey
     required: false
 
-  simple_np_flex_shape:
-    title: Generic Nodepool shape
-    type: oci:core:instanceshapewithflex:name
-    dependsOn:
-      compartmentId: ${compartment_id}
-    required: true
+  #simple_np_flex_shape:
+  #  title: Generic Nodepool shape
+  #  type: oci:core:instanceshapewithflex:name
+  #  dependsOn:
+  #    compartmentId: ${compartment_id}
+  #  required: true
 
   simple_np_size:
     title: Generic Nodepool size
@@ -286,12 +303,12 @@ variables:
     - BM.GPU.H100.8
     default: VM.GPU.A10.1
 
-  gpu_np_size:
-    title: GPU Nodepool size
-    type: integer
-    minimum: 0
-    required: true
-    default: 0
+  #gpu_np_size:
+  #  title: GPU Nodepool size
+  #  type: integer
+  #  minimum: 0
+  #  required: true
+  #  default: 0
 
   create_bastion:
     title: Create bastion host
@@ -305,51 +322,7 @@ variables:
     type: boolean
     default: true
 
-  #jupyter_admin_user:
-  #  type: string
-  #  minLength: 3
-  #  maxLength: 16
-  #  pattern: "^[a-zA-Z0-9][a-zA-Z0-9-]*?[a-zA-Z0-9]$"
-  #  title: Admin User
-  #  description: The admin user to connect to the Jupyter Notebooks.
-  #  default: oracle-ai
-  #  required: true
-#
-  #jupyter_admin_password:
-  #  type: password
-  #  pattern: "^[\\S]{6,16}$"
-  #  title: Admin Password
-  #  description: "The admin password to connect to the Jupyter Notebooks. (min: 6, max: 16 characters)"
-  #  confirmation: true
-  #  required: true
-#
-  #model:
-  #  type: string
-  #  title: The HuggingFace LLM model that will be deployed.
-  #  description: The vLLM <a target="_blank" href="https://docs.vllm.ai/en/latest/models/supported_models.html">supported models</a>. Make sure to get access prior to deployment to the gated models.
-  #  default: meta-llama/Meta-Llama-3-8B-Instruct
-  #  required: true
-#
-  #max_model_len:
-  #  type: integer
-  #  description: Max Model length
-  #  required: true
-  #  default: 8192
-  #  
-#
-  #HF_TOKEN:
-  #  type: password
-  #  title: HuggingFace Token
-  #  description: The token is required for vLLM to be able to pull the model from HuggingFace.
-  #  required: true
-#
-  #LLM_API_KEY:
-  #  type: password
-  #  title: vLLM API KEY
-  #  description: API KEY used to secure your vLLM deployment.
-  #  required: true
-
-
+  
 outputs:
   bastion:
     title: Bastion public IP

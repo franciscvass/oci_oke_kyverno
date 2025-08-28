@@ -2,114 +2,127 @@
 
 ## Getting started
 
-This stack deploys an OKE cluster with two nodepools:
-- one nodepool with flexible shapes
-- one nodepool with GPU shapes
-
-It also deploys several applications to the OKE cluster using helm:
-- nginx
-- cert-manager
-- vllm
-- qdrant vector DB
-- jupyterhub
-
-**Note:** For helm deployments it's necessary to create bastion and operator host, **or** configure a cluster with public API endpoint.
-
-In case the bastion and operator hosts are not created, is a prerequisite to have the following tools already installed and configured:
-- helm
-- oci-cli
-- kubectl
-- jq 
-- bash
-
-## Helm Deployments
-
-### Nginx
-
-[Nginx](https://kubernetes.github.io/ingress-nginx/deploy/) is deployed and configured as default ingress controller.
-
-### Cert-manager
-
-[Cert-manager](https://cert-manager.io/docs/) is deployed to handle the configuration of TLS certificate for the configured ingress resources. Currently it's using the [staging Let's Encrypt endpoint](https://letsencrypt.org/docs/staging-environment/).
-
-### Jupyterhub
-
-[Jupyterhub](https://jupyterhub.readthedocs.io/en/stable/) will be accessible to the address: [https://jupyter.a.b.c.d.nip.io](https://jupyter.a.b.c.d.nip.io), where a.b.c.d is the public IP address of the load balancer associated with the NGINX ingress controller.
-
-JupyterHub is using a dummy authentication scheme (user/password) and the access is secured using the variables:
-
-```
-jupyter_admin_user
-jupyter_admin_password
-```
-
-### vLLM
-
-The LLM model is deployed using [vLLM](https://docs.vllm.ai/en/latest/index.html).
-
-The configured model (`model`) is pulled from HuggingFace using the provided HuggingFace access token(`HF_TOKEN`).
-
-The access to the deployed model is secured with the configured `LLM_API_KEY`.
-
-The service can be accessed publicly using the address [https://llm.a.b.c.d.nip.io](https://llm.a.b.c.d.nip.io), 
-where a.b.c.d is the public IP address of the load balancer associated with the NGINX ingress controller.
-
-### Qdrant
-
-[Qdrant Vector DB](https://qdrant.tech/documentation/) is deployed in stand-alone mode to store the embeddings required the RAG pipeline.
+This stack will deploys an OKE cluster with one nodepool with one worker node to demonstrate how Kyverno works in OKE in OCI.
+In addition it will deploy 2 VM's, a bastion and an operator to be ab;e to manage the cluster.
+The stack will install Kyverno as well and will copy a folder (_kyverno-yaml_) to operator
 
 ## How to deploy?
 
-1. Deploy via ORM
+The Deploy via ORM:
+
 - Create a new stack
 - Upload the TF configuration files
 - Configure the variables
 - Apply
 
-2. Local deployment
 
-- Create a file called `terraform.auto.tfvars` with the required values.
+# how to run de demo
 
-```
-# ORM injected values
-
-region            = "eu-frankfurt-1"
-tenancy_ocid      = "ocid1.tenancy.oc1..aaaaaaaaiyavtwbz4kyu7g7b6wglllccbflmjx2lzk5nwpbme44mv54xu7dq"
-compartment_ocid  = "ocid1.compartment.oc1..aaaaaaaaqi3if6t4n24qyabx5pjzlw6xovcbgugcmatavjvapyq3jfb4diqq"
-
-# OKE Terraform module values
-create_iam_resources     = false
-create_iam_tag_namespace = false
-ssh_public_key           = "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQDU+UhFcOrrOEYim254Uy9i6ZT3M4goH+poSYlWmylnvvAcryJg54kMRWv3rV/Xx6nxbyjukDXGQTYj0Q5caSlGwdg2e4yVLxLRUQbIacW5K468f8EkfNoYNDGrmARvhybWSQvLk5EHR7DlBXQXCmS5yiO7gl+5PFncnNlNRhhwujuHE5nEkdAXSLrAL+NE2hZxlAgpEV0X9Zu9lyl9UT2kgekQ0mr5eDsJMKNoqBoWnhaXEQuCJ4Bw7rJy55GNmwLS/KtpQRKSuAlTRG7pLEL4nc1BOvPQTfx/+gMcT6+NL1yxUusXXuqfk377loeyjiKK+lDrG6pU2gu6+YX68/dn ssh-key-2021-07-20"
-
-## NodePool with non-GPU shape is created by default with size 1
-simple_np_size = 1
-simple_np_flex_shape = {
-    "instanceShape" = "VM.Standard.E5.Flex"
-    "ocpus"         = 2
-    "memory"        = 12
-  }
-
-## NodePool with GPU shape is created by default with size 0
-gpu_np_size = 1
-gpu_np_shape = "VM.GPU.A10.1"
-
-cluster_name         = "oke"
-vcn_name             = "oke-vcn"
-compartment_id       = "ocid1.compartment.oc1..aaaaaaaaqi3if6t4n24qyabx5pjzlw6xovcbgugcmatavjvapyq3jfb4diqq"
-jupyter_admin_user   = "andrei"
-jupyter_admin_password = "<my-secure-password>"
-HF_TOKEN               = "<my-hugging-face-token>"
-LLM_API_KEY            = "<my-secure-api-key>"
-```
-
-- Execute the commands
+- connect to the operator vm (the one that has the kyverno folder)
+- make sure Kyverno resources are installed. Run the below to check
 
 ```
-terraform init
-terraform plan
-terraform apply
+k get all -n kyverno
 ```
+You should get an output like below. The pods must be in Running state. Deployments and replicas must be Ready and Available.
+
+```
+opc@o-kyverno:~/kyverno/01_validation[opc@o-kyverno 01_validation]$ k get all -n kyverno
+NAME                                                 READY   STATUS    RESTARTS   AGE
+pod/kyverno-admission-controller-5bcbdff469-d46xx    1/1     Running   0          19h
+pod/kyverno-background-controller-7c7d4dbbc9-btpf9   1/1     Running   0          19h
+pod/kyverno-cleanup-controller-745cbc6f8d-sjhnq      1/1     Running   0          19h
+pod/kyverno-reports-controller-7867ffd654-4b7sw      1/1     Running   0          19h
+
+NAME                                            TYPE        CLUSTER-IP      EXTERNAL-IP   PORT(S)    AGE
+service/kyverno-background-controller-metrics   ClusterIP   10.96.212.125   <none>        8000/TCP   19h
+service/kyverno-cleanup-controller              ClusterIP   10.96.205.173   <none>        443/TCP    19h
+service/kyverno-cleanup-controller-metrics      ClusterIP   10.96.56.125    <none>        8000/TCP   19h
+service/kyverno-reports-controller-metrics      ClusterIP   10.96.26.108    <none>        8000/TCP   19h
+service/kyverno-svc                             ClusterIP   10.96.66.24     <none>        443/TCP    19h
+service/kyverno-svc-metrics                     ClusterIP   10.96.102.138   <none>        8000/TCP   19h
+
+NAME                                            READY   UP-TO-DATE   AVAILABLE   AGE
+deployment.apps/kyverno-admission-controller    1/1     1            1           19h
+deployment.apps/kyverno-background-controller   1/1     1            1           19h
+deployment.apps/kyverno-cleanup-controller      1/1     1            1           19h
+deployment.apps/kyverno-reports-controller      1/1     1            1           19h
+
+NAME                                                       DESIRED   CURRENT   READY   AGE
+replicaset.apps/kyverno-admission-controller-5bcbdff469    1         1         1       19h
+replicaset.apps/kyverno-background-controller-7c7d4dbbc9   1         1         1       19h
+replicaset.apps/kyverno-cleanup-controller-745cbc6f8d      1         1         1       19h
+replicaset.apps/kyverno-reports-controller-7867ffd654      1         1         1       19h
+```
+- change directory to kyverno-yaml/01_validation
+- run the below to create a namespace _demo_ where we will test the policies
+```
+kubectl apply -f namespace.yaml 
+```
+- run the below to create a policy that will enforce deployments to have a number of 3 replicas and a label named _team_
+```
+kubectl apply -f k_depl_rules_namespace.yaml 
+```
+- check the policy
+```
+kubectl get policies -n demo
+```
+- you shoud see something like 
+```
+NAME                        ADMISSION   BACKGROUND   READY   AGE   MESSAGE
+validation-for-deployment   true        true         True    35s   Ready
+```
+- Now we will try to create a deployment that does not has the number of desired replicas nor a label named _team_
+- It will failed. Run the below:
+
+```
+kubectl apply -f depl.yaml 
+```
+- You will get :
+```
+Error from server: error when creating "depl.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+resource Deployment/demo/nginx-deployment was blocked due to the following policies 
+validation-for-deployment:
+  check-for-replica: 'validation error: The replica must set to >=3. rule check-for-replica
+    failed at path /spec/replicas/'
+  check-for-team-label: 'validation error: The label ''team'' is required for all
+    deployments. rule check-for-team-label failed at path /metadata/labels/team/'
+```
+- Open the _depl.yaml_ file and change the number of replicas from 2 to 3
+- save the file an run again 
+```
+kubectl apply -f depl.yaml 
+```
+- It will fails again now because of missing label _team_
+
+```
+Error from server: error when creating "depl.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
+resource Deployment/demo/nginx-deployment was blocked due to the following policies 
+validation-for-deployment:
+  check-for-team-label: 'validation error: The label ''team'' is required for all
+    deployments. rule check-for-team-label failed at path /metadata/labels/team/'
+```
+
+- Open the file agin and uncomment label team _(team: frontend)_
+- save the file and run the command below:
+
+```
+kubectl apply -f depl.yaml 
+```
+
+- it should work fine now
+- you may check the depl if you want
+
+```
+kubectl get deployments -n demo
+```
+
+```
+k delete -f k_depl_rules_namespace.yaml 
+k delete -f depl.yaml
+k delete -f namespace.yaml
+```
+
 
 ## Known Issues
 

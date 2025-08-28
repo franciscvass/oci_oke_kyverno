@@ -93,7 +93,7 @@ variable "cluster_name" {
 
 variable "cni_type" {
   type    = string
-  default = "flannel"
+  default = "npn"
 
   validation {
     condition     = contains(["flannel", "npn"], var.cni_type)
@@ -108,7 +108,7 @@ variable "compartment_id" {
 
 variable "control_plane_is_public" {
   type    = bool
-  default = true
+  default = false
 }
 
 variable "control_plane_allowed_cidrs" {
