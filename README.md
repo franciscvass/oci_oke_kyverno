@@ -33,7 +33,7 @@ Host OKE-kyv-test1-oper
   HostKeyAlias OKE-kyv-test1-oper
 ```
 
-## how to run de demo
+## how to run the demo
 
 - connect to the operator vm
 - make sure Kyverno resources are installed. Run the below to check
@@ -176,3 +176,32 @@ nginx-deployment   2/2     2            2           27s   app=nginx,team=bravo
 kubectl delete -f depl.yaml 
 kubectl delete -f k_mutate.yaml
 ```
+**2. Demonstrate a generate policy**
+
+- this policy will clone a secret every time a namespace is created. The secret will be cloned in the new namespace 
+- we need to create a role first as kyverno does not have privileges to create secrets.
+- change dir to 03_generate
+- run the below
+```
+kubectl apply -f cluster_role.yaml
+```
+- create a secret in the default namespace. This secret is being cloned by the policy
+```
+kubectl apply -f create_secret.yaml 
+kubectl get secrets -n default
+```
+- create a new namespace
+```
+kubectl create ns demo1
+```
+- as soon as this NS is created the secret _regcred_ will be created in the new namespace
+```
+kubectl get secrets -n demo1
+```
+- cleanup 
+```
+kubectl delete -f k_generate.yaml 
+kubectl delete secret regcred -n demo1
+kubectl delete ns demo1
+```
+
