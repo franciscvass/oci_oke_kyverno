@@ -1,4 +1,4 @@
-# orm-stack-oke-helm-deployment
+# Kyverno demo
 
 ## Getting started
 
@@ -8,21 +8,38 @@ The stack will install Kyverno as well and will copy a folder (_kyverno-yaml_) t
 
 ## How to deploy?
 
-The Deploy via ORM:
+### Prerequisites
 
-- Create a new stack
-- Upload the TF configuration files
+- the account used to deploy the ORM stack must be part of a group that has the following permissions described [here](https://docs.oracle.com/en-us/iaas/Content/ContEng/Concepts/contengpolicyconfig.htm#policyforgroupsrequired)
+
+
+### Deploy via ORM:
+
+- Clone this repo
+- Create a new stack in Resource Manager
+- Upload the folder configuration files **oci_oke_kyverno** 
 - Configure the variables
-- Apply
+- Apply the stack
+- At the end you should see an output with bastion and operator IP's
+- these will be used to ssh to operator VM
+- you may use something like this in your ssh config file
 
+```
+Host OKE-kyv-test1-oper
+  HostName <operator IP>
+  ProxyCommand ssh -W %h:%p -i <path to your ssh private key> opc@<bastion IP>
+  IdentityFile <path to your ssh private key>
+  User opc
+  HostKeyAlias OKE-kyv-test1-oper
+```
 
-# how to run de demo
+## how to run de demo
 
-- connect to the operator vm (the one that has the kyverno folder)
+- connect to the operator vm
 - make sure Kyverno resources are installed. Run the below to check
 
 ```
-k get all -n kyverno
+kubectl get all -n kyverno
 ```
 You should get an output like below. The pods must be in Running state. Deployments and replicas must be Ready and Available.
 
@@ -54,6 +71,8 @@ replicaset.apps/kyverno-background-controller-7c7d4dbbc9   1         1         1
 replicaset.apps/kyverno-cleanup-controller-745cbc6f8d      1         1         1       19h
 replicaset.apps/kyverno-reports-controller-7867ffd654      1         1         1       19h
 ```
+**1. Demonstrate a validation policy**
+
 - change directory to kyverno-yaml/01_validation
 - run the below to create a namespace _demo_ where we will test the policies
 ```
@@ -78,7 +97,7 @@ validation-for-deployment   true        true         True    35s   Ready
 ```
 kubectl apply -f depl.yaml 
 ```
-- You will get :
+- You will get an error about the number of replicas:
 ```
 Error from server: error when creating "depl.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
 resource Deployment/demo/nginx-deployment was blocked due to the following policies 
@@ -93,7 +112,7 @@ validation-for-deployment:
 ```
 kubectl apply -f depl.yaml 
 ```
-- It will fails again now because of missing label _team_
+- It will fails again now because of a missing label _team_
 
 ```
 Error from server: error when creating "depl.yaml": admission webhook "validate.kyverno.svc-fail" denied the request: 
@@ -103,7 +122,7 @@ validation-for-deployment:
     deployments. rule check-for-team-label failed at path /metadata/labels/team/'
 ```
 
-- Open the file agin and uncomment label team _(team: frontend)_
+- Open the file again and uncomment label team:  _team: frontend_
 - save the file and run the command below:
 
 ```
@@ -117,15 +136,43 @@ kubectl apply -f depl.yaml
 kubectl get deployments -n demo
 ```
 
+- delete the deployment and the policy
+- Do not delete the namespace
+
 ```
-k delete -f k_depl_rules_namespace.yaml 
-k delete -f depl.yaml
-k delete -f namespace.yaml
+kubectl delete -f k_depl_rules_namespace.yaml 
+kubectl delete -f depl.yaml
 ```
 
+**2. Demonstrate a mutate policy**
 
-## Known Issues
+- this policy will mutate a resource by adding a label if does not exists
+- go to 02_mutate folder
+- run the below to create a cluster wide policy
+```
+kubectl apply -f k_mutate.yaml 
+```
+- check the policy
+```
+kubectl get clusterpolicies 
+```
+- now create the deployment. Mind there is no label named _team_ 
+```
+kubectl apply -f depl.yaml 
+```
+- check the deployment labels
+```
+kubectlk get deployments --show-labels -n demo
+```
+- you should see a label named _team_ was added
 
-If `terraform destroy` fails, manually remove the LoadBalancer resource configured for the Nginx Ingress Controller.
+```
+NAME               READY   UP-TO-DATE   AVAILABLE   AGE   LABELS
+nginx-deployment   2/2     2            2           27s   app=nginx,team=bravo
+```
 
-After `terrafrom destroy`, the block volumes corresponding to the PVCs used by the applications in the cluster won't be removed. You have to manually remove them.
+- clean up
+```
+kubectl delete -f depl.yaml 
+kubectl delete -f k_mutate.yaml
+```
