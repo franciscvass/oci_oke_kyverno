@@ -176,7 +176,7 @@ nginx-deployment   2/2     2            2           27s   app=nginx,team=bravo
 kubectl delete -f depl.yaml 
 kubectl delete -f k_mutate.yaml
 ```
-**2. Demonstrate a generate policy**
+**3. Demonstrate a generate policy**
 
 - this policy will clone a secret every time a namespace is created. The secret will be cloned in the new namespace 
 - we need to create a role first as kyverno does not have privileges to create secrets.
@@ -205,3 +205,6 @@ kubectl delete secret regcred -n demo1
 kubectl delete ns demo1
 ```
 
+## Destroy the OKE cluster
+
+- From Resource Manager chose the stack you created and click on Destroy button
