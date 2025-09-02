@@ -50,15 +50,15 @@ resource "null_resource" "helm_deployment_via_operator" {
   }
 
 
-  provisioner "file" {
-    content     = var.helm_template_values_override
-    destination = local.operator_helm_values_override_template_file_path
-  }
-
-  provisioner "file" {
-    content     = var.helm_user_values_override
-    destination = local.operator_helm_values_override_user_file_path
-  }
+  #provisioner "file" {
+  #  content     = var.helm_template_values_override
+  #  destination = local.operator_helm_values_override_template_file_path
+  #}
+#
+  #provisioner "file" {
+  #  content     = var.helm_user_values_override
+  #  destination = local.operator_helm_values_override_user_file_path
+  #}
 
   #provisioner "remote-exec" {
   #  inline = concat(
@@ -114,70 +114,70 @@ resource "null_resource" "helm_deployment_via_operator" {
 }
 
 
-resource "local_file" "helm_template_file" {
-  count = var.deploy_from_local ? 1 : 0
-
-  content  = var.helm_template_values_override
-  filename = local.local_helm_values_override_template_file_path
-}
-
-
-resource "local_file" "helm_user_file" {
-  count = var.deploy_from_local ? 1 : 0
-
-  content  = var.helm_user_values_override
-  filename = local.local_helm_values_override_user_file_path
-}
-
-resource "null_resource" "helm_deployment_from_local" {
-  count = var.deploy_from_local ? 1 : 0
-
-  triggers = {
-    manifest_md5          = try(md5("${var.helm_template_values_override}-${var.helm_user_values_override}"), null)
-    deployment_name       = var.deployment_name
-    namespace             = var.namespace
-    local_kubeconfig_path = var.local_kubeconfig_path
-  }
-
-  provisioner "local-exec" {
-    working_dir = path.root
-    command     = <<-EOT
-      export KUBECONFIG=${var.local_kubeconfig_path}
-      ${join("\n", var.pre_deployment_commands)}
-      if [ -s "${local.local_helm_values_override_user_file_path}" ]; then
-      helm upgrade --install ${var.deployment_name} ${var.helm_chart} \
-      --repo ${var.helm_repository} \
-      --namespace ${var.namespace} \
-      --create-namespace --wait \
-      -f ${local.local_helm_values_override_template_file_path} \
-      -f ${local.local_helm_values_override_user_file_path} ${join(" ", var.deployment_extra_args)}
-      else
-      helm upgrade --install ${var.deployment_name} ${var.helm_chart} \
-      --repo ${var.helm_repository} \
-      --namespace ${var.namespace} \
-      --create-namespace --wait \
-      --kubeconfig ./cluster_kubeconfig \
-      -f ${local.local_helm_values_override_template_file_path} ${join(" ", var.deployment_extra_args)}
-      fi
-      ${join("\n", var.post_deployment_commands)}
-      EOT
-  }
-
-  provisioner "remote-exec" {
-    when = destroy
-    inline = [
-      "export KUBECONFIG=${self.triggers.local_kubeconfig_path}",
-    "helm uninstall ${self.triggers.deployment_name} --namespace ${self.triggers.namespace} --wait"]
-    on_failure = continue
-  }
-
-  lifecycle {
-    ignore_changes = [
-      triggers["namespace"],
-      triggers["deployment_name"],
-      triggers["local_kubeconfig_path"]
-    ]
-  }
-
-  depends_on = [local_file.helm_template_file, local_file.helm_user_file]
-}
+#resource "local_file" "helm_template_file" {
+#  count = var.deploy_from_local ? 1 : 0
+#
+#  content  = var.helm_template_values_override
+#  filename = local.local_helm_values_override_template_file_path
+#}
+#
+#
+#resource "local_file" "helm_user_file" {
+#  count = var.deploy_from_local ? 1 : 0
+#
+#  content  = var.helm_user_values_override
+#  filename = local.local_helm_values_override_user_file_path
+#}
+#
+#resource "null_resource" "helm_deployment_from_local" {
+#  count = var.deploy_from_local ? 1 : 0
+#
+#  triggers = {
+#    manifest_md5          = try(md5("${var.helm_template_values_override}-${var.helm_user_values_override}"), null)
+#    deployment_name       = var.deployment_name
+#    namespace             = var.namespace
+#    local_kubeconfig_path = var.local_kubeconfig_path
+#  }
+#
+#  provisioner "local-exec" {
+#    working_dir = path.root
+#    command     = <<-EOT
+#      export KUBECONFIG=${var.local_kubeconfig_path}
+#      ${join("\n", var.pre_deployment_commands)}
+#      if [ -s "${local.local_helm_values_override_user_file_path}" ]; then
+#      helm upgrade --install ${var.deployment_name} ${var.helm_chart} \
+#      --repo ${var.helm_repository} \
+#      --namespace ${var.namespace} \
+#      --create-namespace --wait \
+#      -f ${local.local_helm_values_override_template_file_path} \
+#      -f ${local.local_helm_values_override_user_file_path} ${join(" ", var.deployment_extra_args)}
+#      else
+#      helm upgrade --install ${var.deployment_name} ${var.helm_chart} \
+#      --repo ${var.helm_repository} \
+#      --namespace ${var.namespace} \
+#      --create-namespace --wait \
+#      --kubeconfig ./cluster_kubeconfig \
+#      -f ${local.local_helm_values_override_template_file_path} ${join(" ", var.deployment_extra_args)}
+#      fi
+#      ${join("\n", var.post_deployment_commands)}
+#      EOT
+#  }
+#
+#  provisioner "remote-exec" {
+#    when = destroy
+#    inline = [
+#      "export KUBECONFIG=${self.triggers.local_kubeconfig_path}",
+#    "helm uninstall ${self.triggers.deployment_name} --namespace ${self.triggers.namespace} --wait"]
+#    on_failure = continue
+#  }
+#
+#  lifecycle {
+#    ignore_changes = [
+#      triggers["namespace"],
+#      triggers["deployment_name"],
+#      triggers["local_kubeconfig_path"]
+#    ]
+#  }
+#
+#  depends_on = [local_file.helm_template_file, local_file.helm_user_file]
+#}
