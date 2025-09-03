@@ -1,17 +1,6 @@
 # Copyright (c) 2022, 2024 Oracle Corporation and/or its affiliates.
 # Licensed under the Universal Permissive License v 1.0 as shown at https://oss.oracle.com/licenses/upl
 
-#locals {
-#  helm_values_override_user_file     = "${var.deployment_name}-${var.namespace}-user-values-override.yaml"
-#  helm_values_override_template_file = "${var.deployment_name}-${var.namespace}-template-values-override.yaml"
-#
-#  operator_helm_values_override_user_file_path     = join("/", [var.operator_helm_values_path, local.helm_values_override_user_file])
-#  operator_helm_values_override_template_file_path = join("/", [var.operator_helm_values_path, local.helm_values_override_template_file])
-#
-#  local_helm_values_override_user_file_path     = join("/", [path.root, local.helm_values_override_user_file])
-#  local_helm_values_override_template_file_path = join("/", [path.root, local.helm_values_override_template_file])
-#}
-
 resource "null_resource" "helm_deployment_via_operator" {
   count = var.deploy_from_operator ? 1 : 0
 
