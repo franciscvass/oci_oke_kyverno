@@ -3,8 +3,8 @@
 ## Getting started
 
 This stack will deploys an OKE cluster with one nodepool with one worker node to demonstrate how Kyverno works in OKE in OCI.
-In addition it will deploy 2 VM's, a bastion and an operator to be ab;e to manage the cluster.
-The stack will install Kyverno as well and will copy a folder (_kyverno-yaml_) to operator
+In addition it will deploy 2 VM's, a bastion and an operator to be able to manage the cluster.
+The stack will install Kyverno as well and will copy a folder (_kyverno_) to operator
 
 ## How to deploy?
 
@@ -73,7 +73,7 @@ replicaset.apps/kyverno-reports-controller-7867ffd654      1         1         1
 ```
 **1. Demonstrate a validation policy**
 
-- change directory to kyverno-yaml/01_validation
+- change directory to kyverno/01_validation
 - run the below to create a namespace _demo_ where we will test the policies
 ```
 kubectl apply -f namespace.yaml 
