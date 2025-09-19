@@ -162,7 +162,7 @@ kubectl apply -f depl.yaml
 ```
 - check the deployment labels
 ```
-kubectlk get deployments --show-labels -n demo
+kubectl get deployments --show-labels -n demo
 ```
 - you should see a label named _team_ was added
 
@@ -185,19 +185,28 @@ kubectl delete -f k_mutate.yaml
 ```
 kubectl apply -f cluster_role.yaml
 ```
-- create a secret in the default namespace. This secret is being cloned by the policy
+- create a secret in the default namespace. This secret is being cloned by the policy when a new namespace will be created
 ```
 kubectl apply -f create_secret.yaml 
 kubectl get secrets -n default
 ```
+
+- create the kyverno policy
+```
+kubectl apply -f k_generate.yaml 
+```
+
 - create a new namespace
+
 ```
 kubectl create ns demo1
 ```
+
 - as soon as this NS is created the secret _regcred_ will be created in the new namespace
 ```
 kubectl get secrets -n demo1
 ```
+
 - cleanup 
 ```
 kubectl delete -f k_generate.yaml 
