@@ -148,13 +148,10 @@ variables:
     required: true
 
   kubernetes_version:
-    type: enum
+    type: string
     title: Kubernetes version
     description: The version of the Kubernetes cluster.
-    default: v1.32.1
-    enum:
-      - v1.32.1
-    allowMultiple: false
+    default: v1.34.2
     required: true
 
   cni_type:
